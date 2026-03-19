@@ -17,25 +17,7 @@ exports.modules = {
   \*****************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   $$typeof: () => (/* binding */ $$typeof),
-/* harmony export */   __esModule: () => (/* binding */ __esModule),
-/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
-/* harmony export */ });
-/* harmony import */ var next_dist_build_webpack_loaders_next_flight_loader_module_proxy__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! next/dist/build/webpack/loaders/next-flight-loader/module-proxy */ "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-loader/module-proxy.js");
-
-const proxy = (0,next_dist_build_webpack_loaders_next_flight_loader_module_proxy__WEBPACK_IMPORTED_MODULE_0__.createProxy)(String.raw`C:\Users\satvik\Desktop\projects\utility-hub\src\tools\qr-generator\index.js`)
-
-// Accessing the __esModule property and exporting $$typeof are required here.
-// The __esModule getter forces the proxy target to create the default export
-// and the $$typeof value is for rendering logic to determine if the module
-// is a client boundary.
-const { __esModule, $$typeof } = proxy;
-const __default__ = proxy.default;
-
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ((0,next_dist_build_webpack_loaders_next_flight_loader_module_proxy__WEBPACK_IMPORTED_MODULE_0__.createProxy)(String.raw`C:\Users\satvik\Desktop\projects\utility-hub\src\tools\qr-generator\index.js#default`));
-
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (__WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\n/* harmony import */ var next_dynamic__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! next/dynamic */ \"(rsc)/./node_modules/next/dist/api/app-dynamic.js\");\n\n/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ((0,next_dynamic__WEBPACK_IMPORTED_MODULE_0__[\"default\"])(()=>__webpack_require__.e(/*! import() */ \"_rsc_src_tools_qr-generator_Tool_jsx\").then(__webpack_require__.bind(__webpack_require__, /*! ./Tool */ \"(rsc)/./src/tools/qr-generator/Tool.jsx\")), {\n    loadableGenerated: {\n        modules: [\n            \"tools\\\\qr-generator\\\\index.js -> \" + \"./Tool\"\n        ]\n    },\n    ssr: false\n}));\n//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiKHJzYykvLi9zcmMvdG9vbHMvcXItZ2VuZXJhdG9yL2luZGV4LmpzIiwibWFwcGluZ3MiOiI7Ozs7O0FBQW1DO0FBRW5DLGlFQUFlQSx3REFBT0EsQ0FBQyxJQUFNLDBMQUFnQjs7Ozs7O0lBQUlDLEtBQUs7SUFBUyIsInNvdXJjZXMiOlsid2VicGFjazovL3V0aWxpdHktaHViLy4vc3JjL3Rvb2xzL3FyLWdlbmVyYXRvci9pbmRleC5qcz8zYWZhIl0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCBkeW5hbWljIGZyb20gXCJuZXh0L2R5bmFtaWNcIjtcclxuXHJcbmV4cG9ydCBkZWZhdWx0IGR5bmFtaWMoKCkgPT4gaW1wb3J0KFwiLi9Ub29sXCIpLCB7IHNzcjogZmFsc2UgfSk7Il0sIm5hbWVzIjpbImR5bmFtaWMiLCJzc3IiXSwic291cmNlUm9vdCI6IiJ9\n//# sourceURL=webpack-internal:///(rsc)/./src/tools/qr-generator/index.js\n");
 
 /***/ })
 

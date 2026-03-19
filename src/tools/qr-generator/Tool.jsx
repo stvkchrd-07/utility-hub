@@ -2,9 +2,6 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 
-// ── QR encoding via qrcode library loaded from CDN ──
-// We dynamically load qrcode.js from CDN to avoid bundling issues
-
 const DOT_STYLES = [
   { id: "square", label: "Square" },
   { id: "rounded", label: "Rounded" },
@@ -24,15 +21,11 @@ const PRESETS = [
 const ERROR_LEVELS = ["L", "M", "Q", "H"];
 
 export default function QrGeneratorTool() {
-  // Client-only guard
-  if (typeof window === "undefined") {
-    return null;
-  }
-
   const canvasRef = useRef(null);
   const logoInputRef = useRef(null);
   const [qrLib, setQrLib] = useState(null);
   const [libError, setLibError] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const [settings, setSettings] = useState({
     text: "https://utilityhub.app",
@@ -47,66 +40,54 @@ export default function QrGeneratorTool() {
     errorLevel: "H",
     margin: 2,
     logoUrl: null,
-    logoSize: 22, // % of QR size
+    logoSize: 22,
     preset: "midnight",
   });
 
   const [isRendering, setIsRendering] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
-  const [mounted, setMounted] = useState(false);
 
-  // Ensure component is mounted on client before rendering
+  // Step 1: mark mounted (client only)
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Step 2: load QR lib after mount
   useEffect(() => {
-  if (typeof window === "undefined") return;
-  if (window.QRCode) { setQrLib(window.QRCode); return; }
-  
-  const script = document.createElement("script");
-  script.src = "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js";
-  script.async = true;
-  script.onload = () => {
-    if (window.QRCode) setQrLib(window.QRCode);
-    else setLibError(true);
-  };
-  script.onerror = () => setLibError(true);
-  
-  const addScript = () => {
+    if (!mounted) return;
+    if (window.QRCode) { setQrLib(window.QRCode); return; }
+
+    const script = document.createElement("script");
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js";
+    script.async = true;
+    script.onload = () => {
+      if (window.QRCode) setQrLib(window.QRCode);
+      else setLibError(true);
+    };
+    script.onerror = () => setLibError(true);
+
     if (document.body) {
       document.body.appendChild(script);
+    } else {
+      document.addEventListener("DOMContentLoaded", () => document.body.appendChild(script));
     }
-  };
-  
-  if (document.body) {
-    addScript();
-  } else {
-    document.addEventListener("DOMContentLoaded", addScript);
-  }
 
-  return () => {
-    // cleanup
-    const existing = document.querySelector(`script[src="${script.src}"]`);
-    if (existing) existing.remove();
-    document.removeEventListener("DOMContentLoaded", addScript);
-  };
-}, []);
-  // Use qrcode-generator approach via our own QR matrix builder
-  // Since qrcodejs doesn't expose matrix, we use a canvas-based approach
+    return () => {
+      const existing = document.querySelector(`script[src="${script.src}"]`);
+      if (existing) existing.remove();
+    };
+  }, [mounted]);
+
   const generateQRMatrix = useCallback(async (text, errorLevel) => {
     return new Promise((resolve) => {
       try {
-        if (!document.body) {
-          resolve(null);
-          return;
-        }
-        // Create offscreen div, render QR, extract pixel data
+        if (!document.body) { resolve(null); return; }
         const container = document.createElement("div");
         container.style.position = "absolute";
         container.style.left = "-9999px";
         document.body.appendChild(container);
 
-        const qr = new window.QRCode(container, {
+        new window.QRCode(container, {
           text,
           width: 256,
           height: 256,
@@ -119,7 +100,6 @@ export default function QrGeneratorTool() {
           const img = container.querySelector("img") || container.querySelector("canvas");
           if (!img) { document.body.removeChild(container); resolve(null); return; }
 
-          // Draw to offscreen canvas and read pixel matrix
           const offCanvas = document.createElement("canvas");
           offCanvas.width = 256;
           offCanvas.height = 256;
@@ -128,9 +108,8 @@ export default function QrGeneratorTool() {
           const drawImg = new Image();
           drawImg.onload = () => {
             ctx.drawImage(drawImg, 0, 0, 256, 256);
-            const imageData = ctx.getImageData(0, 0, 256, 256);
             document.body.removeChild(container);
-            resolve({ imageData, canvas: offCanvas });
+            resolve({ canvas: offCanvas });
           };
           drawImg.onerror = () => { document.body.removeChild(container); resolve(null); };
 
@@ -152,7 +131,6 @@ export default function QrGeneratorTool() {
 
     if (!text.trim()) { setIsRendering(false); return; }
 
-    // Get QR matrix from qrcodejs
     const qrData = await generateQRMatrix(text, errorLevel);
     if (!qrData) { setIsRendering(false); return; }
 
@@ -161,12 +139,9 @@ export default function QrGeneratorTool() {
     canvas.height = size;
     const ctx = canvas.getContext("2d");
 
-    // Read QR matrix by sampling the 256x256 source
     const srcCtx = qrData.canvas.getContext("2d");
     const srcData = srcCtx.getImageData(0, 0, 256, 256);
 
-    // Detect QR module size by finding the quiet zone
-    // Sample column from top to find first dark pixel
     let firstDark = -1;
     for (let y = 0; y < 256; y++) {
       const i = (y * 256 + 128) * 4;
@@ -174,9 +149,6 @@ export default function QrGeneratorTool() {
     }
     const quietZonePixels = firstDark > 0 ? firstDark : 4;
 
-    // Determine module count by sampling
-    // QR codes are typically 21x21 to 177x177 modules
-    // We sample to find module pixel size
     let modulePixels = 1;
     if (firstDark > 0) {
       for (let y = firstDark; y < 256; y++) {
@@ -188,38 +160,31 @@ export default function QrGeneratorTool() {
 
     const moduleCount = Math.round((256 - quietZonePixels * 2) / modulePixels);
 
-    // Build boolean matrix
     const matrix = [];
     for (let row = 0; row < moduleCount; row++) {
       matrix[row] = [];
       for (let col = 0; col < moduleCount; col++) {
-        const srcX = Math.round(quietZonePixels + col * modulePixels + modulePixels / 2);
-        const srcY = Math.round(quietZonePixels + row * modulePixels + modulePixels / 2);
-        const clampX = Math.min(srcX, 255);
-        const clampY = Math.min(srcY, 255);
-        const i = (clampY * 256 + clampX) * 4;
+        const srcX = Math.min(Math.round(quietZonePixels + col * modulePixels + modulePixels / 2), 255);
+        const srcY = Math.min(Math.round(quietZonePixels + row * modulePixels + modulePixels / 2), 255);
+        const i = (srcY * 256 + srcX) * 4;
         matrix[row][col] = srcData.data[i] < 128;
       }
     }
 
-    // Draw background
     ctx.fillStyle = bgColor;
     ctx.fillRect(0, 0, size, size);
 
-    // Set up gradient or solid fill for dots
     const marginPx = margin * (size / (moduleCount + margin * 2));
     const cellSize = (size - marginPx * 2) / moduleCount;
 
     let dotFill;
     if (gradEnabled) {
       const angleRad = (gradAngle * Math.PI) / 180;
-      const cx = size / 2, cy = size / 2;
-      const r = size / 2;
-      const x1 = cx - Math.cos(angleRad) * r;
-      const y1 = cy - Math.sin(angleRad) * r;
-      const x2 = cx + Math.cos(angleRad) * r;
-      const y2 = cy + Math.sin(angleRad) * r;
-      const grad = ctx.createLinearGradient(x1, y1, x2, y2);
+      const cx = size / 2, cy = size / 2, r = size / 2;
+      const grad = ctx.createLinearGradient(
+        cx - Math.cos(angleRad) * r, cy - Math.sin(angleRad) * r,
+        cx + Math.cos(angleRad) * r, cy + Math.sin(angleRad) * r
+      );
       grad.addColorStop(0, grad1);
       grad.addColorStop(1, grad2);
       dotFill = grad;
@@ -227,17 +192,11 @@ export default function QrGeneratorTool() {
       dotFill = fgColor;
     }
 
-    // Helper: is this a finder pattern cell?
     const isFinderPattern = (r, c) => {
       const last = moduleCount - 7;
-      return (
-        (r < 7 && c < 7) ||
-        (r < 7 && c >= last) ||
-        (r >= last && c < 7)
-      );
+      return (r < 7 && c < 7) || (r < 7 && c >= last) || (r >= last && c < 7);
     };
 
-    // Draw dots
     ctx.fillStyle = dotFill;
 
     for (let row = 0; row < moduleCount; row++) {
@@ -249,11 +208,9 @@ export default function QrGeneratorTool() {
         const s = cellSize * 0.85;
         const pad = (cellSize - s) / 2;
 
-        // Finder patterns always drawn as rounded squares
         if (isFinderPattern(row, col)) {
-          const r = s * 0.25;
           ctx.beginPath();
-          ctx.roundRect(x + pad, y + pad, s, s, r);
+          ctx.roundRect(x + pad, y + pad, s, s, s * 0.25);
           ctx.fill();
           continue;
         }
@@ -263,9 +220,8 @@ export default function QrGeneratorTool() {
             ctx.fillRect(x + pad, y + pad, s, s);
             break;
           case "rounded": {
-            const r = s * 0.3;
             ctx.beginPath();
-            ctx.roundRect(x + pad, y + pad, s, s, r);
+            ctx.roundRect(x + pad, y + pad, s, s, s * 0.3);
             ctx.fill();
             break;
           }
@@ -291,7 +247,6 @@ export default function QrGeneratorTool() {
       }
     }
 
-    // Draw logo if present
     if (logoUrl) {
       await new Promise((res) => {
         const logo = new Image();
@@ -299,15 +254,11 @@ export default function QrGeneratorTool() {
           const logoSizePx = (size * logoSize) / 100;
           const lx = (size - logoSizePx) / 2;
           const ly = (size - logoSizePx) / 2;
-
-          // White background circle behind logo
-          ctx.fillStyle = bgColor;
           const pad = logoSizePx * 0.15;
+          ctx.fillStyle = bgColor;
           ctx.beginPath();
           ctx.roundRect(lx - pad, ly - pad, logoSizePx + pad * 2, logoSizePx + pad * 2, 12);
           ctx.fill();
-
-          // Draw logo
           ctx.drawImage(logo, lx, ly, logoSizePx, logoSizePx);
           res();
         };
@@ -319,7 +270,6 @@ export default function QrGeneratorTool() {
     setIsRendering(false);
   }, [settings, qrLib, generateQRMatrix]);
 
-  // Re-render on settings change
   useEffect(() => {
     if (qrLib) renderQR();
   }, [settings, qrLib, renderQR]);
@@ -339,8 +289,7 @@ export default function QrGeneratorTool() {
   const handleLogoUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const url = URL.createObjectURL(file);
-    setSettings((s) => ({ ...s, logoUrl: url }));
+    setSettings((s) => ({ ...s, logoUrl: URL.createObjectURL(file) }));
   };
 
   const handleDownload = () => {
@@ -358,6 +307,9 @@ export default function QrGeneratorTool() {
   const inputClass = "w-full bg-bg border border-border rounded-lg px-3 py-2 font-mono text-sm text-ink focus:outline-none focus:border-ink transition-colors";
   const labelClass = "block text-[11px] font-mono text-muted uppercase tracking-wider mb-1.5";
 
+  // Don't render on server
+  if (!mounted) return null;
+
   if (libError) {
     return (
       <div className="text-center py-20">
@@ -368,7 +320,7 @@ export default function QrGeneratorTool() {
     );
   }
 
-  if (!mounted || !qrLib) {
+  if (!qrLib) {
     return (
       <div className="text-center py-20 text-muted font-mono text-sm animate-pulse">
         Loading QR engine…
@@ -414,7 +366,6 @@ export default function QrGeneratorTool() {
       {/* ── Right: Controls ── */}
       <div className="space-y-5">
 
-        {/* Text input */}
         <div className="chrome-card">
           <div className="chrome-bar">
             <div className="chrome-dot" /><div className="chrome-dot" />
@@ -432,7 +383,6 @@ export default function QrGeneratorTool() {
           </div>
         </div>
 
-        {/* Style presets */}
         <div className="chrome-card">
           <div className="chrome-bar">
             <div className="chrome-dot" /><div className="chrome-dot" />
@@ -444,15 +394,12 @@ export default function QrGeneratorTool() {
                 <button
                   key={p.id}
                   onClick={() => applyPreset(p)}
-                  className={`py-2 px-3 rounded-lg text-xs font-mono border transition-all ${
-                    settings.preset === p.id
-                      ? "border-ink bg-ink text-bg"
-                      : "border-border hover:border-ink"
-                  }`}
+                  className="py-2 px-3 rounded-lg text-xs font-mono border transition-all"
                   style={{
                     background: settings.preset === p.id ? p.fg : p.bg,
                     color: settings.preset === p.id ? p.bg : p.fg,
-                    borderColor: settings.preset === p.id ? p.fg : undefined,
+                    borderColor: p.fg,
+                    outline: settings.preset === p.id ? `2px solid ${p.fg}` : "none",
                   }}
                 >
                   {p.label}
@@ -462,7 +409,6 @@ export default function QrGeneratorTool() {
           </div>
         </div>
 
-        {/* Dot style */}
         <div className="chrome-card">
           <div className="chrome-bar">
             <div className="chrome-dot" /><div className="chrome-dot" />
@@ -487,7 +433,6 @@ export default function QrGeneratorTool() {
           </div>
         </div>
 
-        {/* Colors */}
         <div className="chrome-card">
           <div className="chrome-bar">
             <div className="chrome-dot" /><div className="chrome-dot" />
@@ -519,7 +464,6 @@ export default function QrGeneratorTool() {
               </div>
             </div>
 
-            {/* Gradient toggle */}
             <label className="flex items-center gap-3 cursor-pointer">
               <div
                 onClick={() => set("gradEnabled", !settings.gradEnabled)}
@@ -557,7 +501,6 @@ export default function QrGeneratorTool() {
           </div>
         </div>
 
-        {/* Logo */}
         <div className="chrome-card">
           <div className="chrome-bar">
             <div className="chrome-dot" /><div className="chrome-dot" />
@@ -590,7 +533,6 @@ export default function QrGeneratorTool() {
           </div>
         </div>
 
-        {/* Advanced */}
         <div className="chrome-card">
           <div className="chrome-bar">
             <div className="chrome-dot" /><div className="chrome-dot" />
@@ -613,14 +555,12 @@ export default function QrGeneratorTool() {
                 H = highest (use with logo) · L = smallest file
               </p>
             </div>
-
             <div>
               <label className={labelClass}>Size — {settings.size}px</label>
               <input type="range" min="256" max="1024" step="128" value={settings.size}
                 onChange={(e) => set("size", parseInt(e.target.value))}
                 className="w-full accent-accent" />
             </div>
-
             <div>
               <label className={labelClass}>Margin — {settings.margin}</label>
               <input type="range" min="0" max="6" value={settings.margin}

@@ -14,11 +14,5 @@
     "files": [
       "static/chunks/_app-pages-browser_node_modules_imgly_background-removal_dist_index_mjs.js"
     ]
-  },
-  "tools\\qr-generator\\index.js -> ./Tool": {
-    "id": "tools\\qr-generator\\index.js -> ./Tool",
-    "files": [
-      "static/chunks/_app-pages-browser_src_tools_qr-generator_Tool_jsx.js"
-    ]
   }
 }
