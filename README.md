@@ -1,0 +1,133 @@
+# UtilityHub — Free Browser-Based Image Tools
+
+A fast, extensible utility tools website. All processing runs in the browser — no server uploads.
+
+## Tech Stack
+
+- **Next.js 14** (App Router)
+- **Tailwind CSS** (custom design system)
+- **@imgly/background-removal** (WASM-based AI bg removal)
+- **browser-image-compression** (client-side compression)
+- **react-filerobot-image-editor** (full image editor — optional)
+
+---
+
+## Setup
+
+### 1. Prerequisites
+- Node.js 18+ installed
+- npm or yarn
+
+### 2. Install dependencies
+```bash
+cd utility-hub
+npm install
+```
+
+### 3. Run development server
+```bash
+npm run dev
+```
+Open [http://localhost:3000](http://localhost:3000)
+
+### 4. Build for production
+```bash
+npm run build
+npm start
+```
+
+### 5. Deploy to Vercel (recommended)
+```bash
+npm install -g vercel
+vercel
+```
+
+---
+
+## Adding a New Tool
+
+This takes **3 steps** and touches **2 files**:
+
+### Step 1 — Create tool folder
+```
+src/tools/your-tool-name/
+├── meta.js    ← tool metadata
+└── Tool.jsx   ← React component
+```
+
+### Step 2 — Write meta.js
+```js
+const myToolMeta = {
+  id: "your-tool-name",
+  name: "Your Tool Name",
+  tagline: "Short one-liner",
+  description: "Longer description shown on tool page",
+  icon: "⊕",
+  tags: ["image", "convert"],   // used for filtering
+  status: "new",                // "new" | "popular" | "beta" | null
+  path: "/tools/your-tool-name",
+};
+
+export default myToolMeta;
+```
+
+### Step 3 — Register in two places
+
+**src/registry.js** — add import + array entry:
+```js
+import myToolMeta from "./tools/your-tool-name/meta";
+
+export const tools = [bgRemoverMeta, imageResizeMeta, myToolMeta];  // add here
+```
+
+**src/app/tools/[toolId]/page.jsx** — add to toolComponents map:
+```js
+const toolComponents = {
+  "bg-remover": () => import("@/tools/bg-remover/Tool"),
+  "image-resize": () => import("@/tools/image-resize/Tool"),
+  "your-tool-name": () => import("@/tools/your-tool-name/Tool"),  // add here
+};
+```
+
+That's it. The homepage, routing, and metadata are all auto-generated.
+
+---
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── layout.jsx          Root layout + fonts
+│   ├── page.jsx            Homepage
+│   ├── globals.css         Design system + base styles
+│   └── tools/[toolId]/
+│       └── page.jsx        Dynamic tool page
+├── components/
+│   ├── Navbar.jsx
+│   ├── ToolCard.jsx        Browser-chrome card component
+│   └── Footer.jsx
+├── registry.js             Central tool manifest ← EDIT THIS to add tools
+└── tools/
+    ├── bg-remover/
+    │   ├── meta.js
+    │   └── Tool.jsx
+    └── image-resize/
+        ├── meta.js
+        └── Tool.jsx
+```
+
+---
+
+## Design System
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| `--bg` | `#F2F0EB` | Page background |
+| `--ink` | `#0A0A0A` | Primary text |
+| `--accent` | `#FF3800` | Highlights, CTAs |
+| `--muted` | `#9B9789` | Secondary text |
+| `--card` | `#E8E5DE` | Card backgrounds |
+| `--border`| `#C8C4BB` | Borders |
+
+Fonts: **Syne** (display/headings) + **DM Sans** (body) + **DM Mono** (labels/code)
