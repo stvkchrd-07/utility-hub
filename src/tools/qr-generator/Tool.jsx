@@ -21,6 +21,11 @@ const PRESETS = [
 const ERROR_LEVELS = ["L", "M", "Q", "H"];
 
 export default function QrGeneratorTool() {
+  // Client-only guard - don't render on server
+  if (typeof window === "undefined") {
+    return null;
+  }
+
   const canvasRef = useRef(null);
   const logoInputRef = useRef(null);
   const [qrLib, setQrLib] = useState(null);
