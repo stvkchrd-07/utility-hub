@@ -130,7 +130,7 @@ export default function HomePage() {
             <div className="space-y-4 text-muted leading-relaxed">
               <p>
                 Most image tools upload your files to a server, process them
-                there, and send them back. That's slow, requires accounts, and
+                there, and send them back. That&apos;s slow, requires accounts, and
                 raises privacy concerns.
               </p>
               <p>
