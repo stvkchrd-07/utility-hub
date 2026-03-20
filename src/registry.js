@@ -9,9 +9,8 @@
 import bgRemoverMeta from "./tools/bg-remover/meta";
 import imageResizeMeta from "./tools/image-resize/meta";
 import qrGeneratorMeta from "./tools/qr-generator/meta";
-import artisticQrMeta from "./tools/artistic-qr/meta";
 
-export const tools = [bgRemoverMeta, imageResizeMeta, qrGeneratorMeta, artisticQrMeta];
+export const tools = [bgRemoverMeta, imageResizeMeta, qrGeneratorMeta];
 
 export function getToolById(id) {
   return tools.find((t) => t.id === id) || null;

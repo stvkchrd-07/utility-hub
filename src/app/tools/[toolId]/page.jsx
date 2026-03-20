@@ -23,7 +23,6 @@ const toolComponents = {
   "bg-remover":   () => import("@/tools/bg-remover/Tool"),
   "image-resize": () => import("@/tools/image-resize/Tool"),
   "qr-generator": () => import("@/tools/qr-generator/Tool"),
-  "artistic-qr": () => import("@/tools/artistic-qr/Tool"),
   // ─── Add new tools here ───
   // "your-tool-id": () => import("@/tools/your-tool/Tool"),
 };
