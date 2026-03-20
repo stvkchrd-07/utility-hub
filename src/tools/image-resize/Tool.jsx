@@ -99,7 +99,7 @@ export default function ImageResizeTool() {
           }}
           onDragOver={(e) => e.preventDefault()}
           onClick={() => fileInputRef.current?.click()}
-          className="border-2 border-dashed border-border rounded-xl p-16 text-center cursor-pointer hover:border-ink transition-colors"
+          className="border-2 border-dashed border-border rounded-xl p-8 sm:p-16 text-center cursor-pointer hover:border-ink transition-colors"
         >
           <div className="text-5xl mb-4">⬆</div>
           <p className="font-display font-bold text-xl text-ink">
@@ -136,7 +136,7 @@ export default function ImageResizeTool() {
                   <label className="block text-xs font-mono text-muted mb-2 uppercase tracking-wider">
                     Dimensions (px)
                   </label>
-                  <div className="flex gap-3 items-center">
+                  <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-3 items-center">
                     <input
                       type="number"
                       value={settings.width}
@@ -263,14 +263,14 @@ export default function ImageResizeTool() {
                 <img
                   src={result?.url || image.url}
                   alt="Preview"
-                  className="w-full h-64 object-contain"
+                  className="w-full h-52 sm:h-64 object-contain"
                 />
               </div>
             </div>
 
             {result && (
               <div className="space-y-3">
-                <div className="flex gap-4 text-xs font-mono">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-xs font-mono">
                   <span className="text-muted">
                     New size:{" "}
                     <span className="text-ink">

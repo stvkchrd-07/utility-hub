@@ -9,7 +9,7 @@ export default function HomePage() {
       <Navbar />
 
       {/* ── Hero ── */}
-      <section className="max-w-6xl mx-auto px-6 pt-20 pb-16">
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-14 sm:pt-20 pb-12 sm:pb-16">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8">
           <div>
             {/* Eyebrow */}
@@ -21,7 +21,7 @@ export default function HomePage() {
             </div>
 
             {/* Headline */}
-            <h1 className="font-display font-black text-[clamp(3rem,8vw,7rem)] leading-[0.92] text-ink animate-fade-up anim-delay-2">
+            <h1 className="font-display font-black text-[clamp(2.4rem,11vw,7rem)] leading-[0.92] text-ink animate-fade-up anim-delay-2">
               Image
               <br />
               <span className="text-accent">Tools.</span>
@@ -45,7 +45,7 @@ export default function HomePage() {
         </div>
 
         {/* Quick stats bar */}
-        <div className="mt-16 grid grid-cols-3 md:grid-cols-3 gap-px bg-border rounded-xl overflow-hidden animate-fade-up anim-delay-4">
+        <div className="mt-12 sm:mt-16 grid grid-cols-1 sm:grid-cols-3 gap-px bg-border rounded-xl overflow-hidden animate-fade-up anim-delay-4">
           {[
             { n: tools.length, label: "Tools available" },
             { n: "0", label: "Server uploads" },
@@ -65,13 +65,13 @@ export default function HomePage() {
 
       {/* ── Quick links bar ── */}
       <section className="border-y border-border bg-card overflow-hidden animate-fade-in anim-delay-3">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="flex divide-x divide-border">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="flex overflow-x-auto divide-x divide-border">
             {tools.map((tool) => (
               <a
                 key={tool.id}
                 href={tool.path}
-                className="flex items-center justify-between gap-4 px-6 py-4 text-sm font-mono text-muted hover:text-ink hover:bg-bg transition-all flex-1"
+                className="flex items-center justify-between gap-4 px-4 sm:px-6 py-4 text-sm font-mono text-muted hover:text-ink hover:bg-bg transition-all flex-[0_0_220px] sm:flex-1"
               >
                 <span>{tool.name}</span>
                 <span className="text-accent">↗</span>
@@ -82,9 +82,9 @@ export default function HomePage() {
       </section>
 
       {/* ── Tools Grid ── */}
-      <section id="tools" className="max-w-6xl mx-auto px-6 py-20">
-        <div className="flex items-baseline justify-between mb-10">
-          <h2 className="font-display font-black text-4xl text-ink">
+      <section id="tools" className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+        <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between mb-8 sm:mb-10 gap-2">
+          <h2 className="font-display font-black text-3xl sm:text-4xl text-ink">
             All Tools
           </h2>
           <span className="text-xs font-mono text-muted">
@@ -104,7 +104,7 @@ export default function HomePage() {
               <div className="chrome-dot" />
               <span className="text-xs font-mono text-muted ml-2">coming.soon</span>
             </div>
-            <div className="p-6 flex flex-col items-start justify-between h-40">
+            <div className="p-6 flex flex-col items-start justify-between h-36 sm:h-40">
               <div className="text-3xl text-border">+</div>
               <div>
                 <p className="font-display font-bold text-muted">More tools</p>
@@ -120,17 +120,17 @@ export default function HomePage() {
       {/* ── About section ── */}
       <section
         id="about"
-        className="max-w-6xl mx-auto px-6 py-16 border-t border-border"
+        className="max-w-6xl mx-auto px-4 sm:px-6 py-14 sm:py-16 border-t border-border"
       >
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div>
-            <h2 className="font-display font-black text-4xl text-ink mb-4">
+            <h2 className="font-display font-black text-3xl sm:text-4xl text-ink mb-4">
               Why UtilityHub?
             </h2>
             <div className="space-y-4 text-muted leading-relaxed">
               <p>
                 Most image tools upload your files to a server, process them
-                there, and send them back. That's slow, requires accounts, and
+                there, and send them back. That&apos;s slow, requires accounts, and
                 raises privacy concerns.
               </p>
               <p>
@@ -139,7 +139,7 @@ export default function HomePage() {
               </p>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
               { icon: "⚡", label: "Instant", desc: "No server round-trips" },
               { icon: "🔒", label: "Private", desc: "Files stay on your device" },
