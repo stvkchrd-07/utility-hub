@@ -1,22 +1,18 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  webpack: (config) => {
+  webpack: (config, { isServer }) => {
     config.resolve.fallback = { fs: false, path: false };
-    // Ignore optional webgpu backend that's not installed
+    
+    // Fix onnxruntime-web conflicts
     config.resolve.alias = {
       ...config.resolve.alias,
       "onnxruntime-web/webgpu": false,
     };
 
-    // Exclude onnxruntime-web from webpack processing
-    config.externals = config.externals || [];
-    config.externals.push('onnxruntime-web');
-
-    // Add rule to ignore onnxruntime-web files
-    config.module.rules.push({
-      test: /ort\.node\.min\.mjs$/,
-      use: 'null-loader'
-    });
+    // Exclude onnxruntime from server bundle entirely
+    if (isServer) {
+      config.externals = [...(config.externals || []), "onnxruntime-web"];
+    }
 
     return config;
   },
