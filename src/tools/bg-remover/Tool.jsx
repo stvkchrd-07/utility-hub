@@ -70,6 +70,18 @@ export default function BgRemoverTool() {
       if (!blob) {
         throw lastError || new Error("Unable to load model assets");
       }
+      const blob = await removeBackground(originalImage.file, {
+        // Use CDN-hosted model assets so deployment environments (like Vercel)
+        // don't depend on local static path resolution for wasm/model files.
+        publicPath:
+          "https://cdn.jsdelivr.net/npm/@imgly/background-removal-data@1.7.0/dist/",
+        progress: (key, current, total) => {
+          if (total > 0) {
+            const pct = Math.round((current / total) * 60) + 30;
+            setProgress(Math.min(pct, 90));
+          }
+        },
+      });
 
       setProgress(100);
       const resultUrl = URL.createObjectURL(blob);
@@ -78,6 +90,7 @@ export default function BgRemoverTool() {
       console.error(err);
       setError(
         "Background removal failed. Set NEXT_PUBLIC_BG_MODEL_PATH in Vercel, or allow jsdelivr/unpkg."
+        "Background removal failed. Please retry (network/model download may be blocked)."
       );
     } finally {
       setIsProcessing(false);
