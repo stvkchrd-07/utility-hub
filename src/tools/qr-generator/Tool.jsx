@@ -148,7 +148,7 @@ export default function QrGeneratorTool() {
   if (!mounted) return null;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8">
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6 sm:gap-8">
 
       {/* ── Left: Preview ── */}
       <div className="space-y-4">
@@ -158,10 +158,13 @@ export default function QrGeneratorTool() {
             <span className="text-xs font-mono text-muted ml-2">preview.png</span>
           </div>
           <div
-            className="p-8 flex items-center justify-center min-h-[420px]"
+            className="p-4 sm:p-8 flex items-center justify-center min-h-[280px] sm:min-h-[420px]"
             style={{ background: settings.bgColor }}
           >
-            <div ref={containerRef} className="rounded-lg overflow-hidden shadow-lg" />
+            <div
+              ref={containerRef}
+              className="rounded-lg overflow-hidden shadow-lg scale-[0.72] sm:scale-100 origin-center"
+            />
           </div>
         </div>
 
@@ -268,7 +271,7 @@ export default function QrGeneratorTool() {
             <span className="text-xs font-mono text-muted ml-2">colors</span>
           </div>
           <div className="p-5 space-y-4">
-            <div className="flex gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex-1">
                 <label className={labelClass}>Background</label>
                 <div className="flex gap-2 items-center">
