@@ -39,8 +39,10 @@ export default function BgRemoverTool() {
     try {
       // Dynamically import to avoid SSR issues
       const { remove, newSession, rembgConfig } = await import("@bunnio/rembg-web");
+      const ort = await import("onnxruntime-web"); 
+      ort.env.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.18.0/dist/";
+      
       setProgress(30);
-
       const modelPath =
         process.env.NEXT_PUBLIC_REMBG_MODEL_URL || "/models/u2netp.onnx";
       rembgConfig.setCustomModelPath("u2netp", modelPath);
