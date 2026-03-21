@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "postinstall": "node scripts/fetch-rembg-model.mjs"
   },
   "dependencies": {
     "@bunnio/rembg-web": "^1.0.2",
