@@ -40,8 +40,8 @@ export default async function ToolPage({ params }) {
     <main className="min-h-screen">
       <Navbar />
 
-      <div className="max-w-5xl mx-auto px-6 py-12">
-        <div className="flex items-center gap-2 text-xs font-mono text-muted mb-8 animate-fade-up anim-delay-1">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-muted mb-6 sm:mb-8 animate-fade-up anim-delay-1">
           <a href="/" className="hover:text-ink transition-colors">Home</a>
           <span>→</span>
           <a href="/#tools" className="hover:text-ink transition-colors">Tools</a>
@@ -49,11 +49,11 @@ export default async function ToolPage({ params }) {
           <span className="text-ink">{tool.name}</span>
         </div>
 
-        <div className="mb-10 animate-fade-up anim-delay-2">
+        <div className="mb-8 sm:mb-10 animate-fade-up anim-delay-2">
           <div className="flex items-start gap-4">
-            <span className="text-4xl text-accent">{tool.icon}</span>
+            <span className="text-3xl sm:text-4xl text-accent">{tool.icon}</span>
             <div>
-              <h1 className="font-display font-black text-4xl text-ink">{tool.name}</h1>
+              <h1 className="font-display font-black text-3xl sm:text-4xl text-ink">{tool.name}</h1>
               <p className="text-muted mt-2 leading-relaxed max-w-lg">{tool.description}</p>
             </div>
           </div>
