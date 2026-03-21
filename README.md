@@ -42,6 +42,27 @@ npm install -g vercel
 vercel
 ```
 
+### 6. Production deployment checklist (Vercel)
+
+Before your first production deploy, confirm:
+
+1. **Node.js version is 18+** (Vercel Project → Settings → General → Node.js Version).
+2. **Build command** is `npm run build`.
+3. **Install command** is `npm ci` (reproducible install from lockfile).
+4. **Output settings** use Next.js framework defaults.
+5. If you use a custom domain, set it in Vercel Project → **Domains**.
+6. Redeploy after any dependency updates to keep serverless bundles in sync.
+
+This repo includes a `vercel.json` with sane defaults for build/install and a Next.js framework hint.
+
+### Background remover deployment fix (important)
+
+If background removal fails in production, add this env var in Vercel:
+
+`NEXT_PUBLIC_REMBG_MODEL_URL=https://huggingface.co/bunnio/u2netp/resolve/main/model.onnx`
+
+You can also host the ONNX model yourself and point this var to your own public model URL.
+
 ---
 
 ## Adding a New Tool
