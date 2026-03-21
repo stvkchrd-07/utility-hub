@@ -62,6 +62,9 @@ If background removal fails in production, add this env var in Vercel:
 `NEXT_PUBLIC_REMBG_MODEL_URL=https://huggingface.co/bunnio/u2netp/resolve/main/model.onnx`
 
 You can also host the ONNX model yourself and point this var to your own public model URL.
+`NEXT_PUBLIC_BG_MODEL_PATH=https://cdn.jsdelivr.net/npm/@imgly/background-removal-data@1.7.0/dist/`
+
+You can also host the model files yourself and point this var to your own public path.
 
 ---
 

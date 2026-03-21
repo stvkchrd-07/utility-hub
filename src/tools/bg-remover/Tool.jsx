@@ -55,6 +55,44 @@ export default function BgRemoverTool() {
           if (typeof info?.progress === "number") {
             const pct = Math.round(info.progress);
             setProgress(Math.max(30, Math.min(pct, 95)));
+      const modelSources = [
+        process.env.NEXT_PUBLIC_BG_MODEL_PATH,
+        "https://cdn.jsdelivr.net/npm/@imgly/background-removal-data@1.7.0/dist/",
+        "https://unpkg.com/@imgly/background-removal-data@1.7.0/dist/",
+      ].filter(Boolean);
+
+      let blob = null;
+      let lastError = null;
+
+      for (const publicPath of modelSources) {
+        try {
+          blob = await removeBackground(originalImage.file, {
+            publicPath,
+            progress: (key, current, total) => {
+              if (total > 0) {
+                const pct = Math.round((current / total) * 60) + 30;
+                setProgress(Math.min(pct, 90));
+              }
+            },
+          });
+          break;
+        } catch (err) {
+          lastError = err;
+        }
+      }
+
+      if (!blob) {
+        throw lastError || new Error("Unable to load model assets");
+      }
+      const blob = await removeBackground(originalImage.file, {
+        // Use CDN-hosted model assets so deployment environments (like Vercel)
+        // don't depend on local static path resolution for wasm/model files.
+        publicPath:
+          "https://cdn.jsdelivr.net/npm/@imgly/background-removal-data@1.7.0/dist/",
+        progress: (key, current, total) => {
+          if (total > 0) {
+            const pct = Math.round((current / total) * 60) + 30;
+            setProgress(Math.min(pct, 90));
           }
         },
       });
@@ -66,6 +104,8 @@ export default function BgRemoverTool() {
       console.error(err);
       setError(
         "Background removal failed. Set NEXT_PUBLIC_REMBG_MODEL_URL in Vercel or check model/CDN access."
+        "Background removal failed. Set NEXT_PUBLIC_BG_MODEL_PATH in Vercel, or allow jsdelivr/unpkg."
+        "Background removal failed. Please retry (network/model download may be blocked)."
       );
     } finally {
       setIsProcessing(false);

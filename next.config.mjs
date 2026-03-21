@@ -4,6 +4,7 @@ const nextConfig = {
     config.resolve.fallback = { fs: false, path: false };
 
     // Avoid bundling WebGPU variant that breaks minification in this setup.
+    // Fix onnxruntime-web conflicts
     config.resolve.alias = {
       ...config.resolve.alias,
       "onnxruntime-web/webgpu": false,
@@ -16,6 +17,11 @@ const nextConfig = {
     });
 
     // Keep onnxruntime out of the server bundle (tool is client-only).
+      test: /ort\.bundle\.min\.m?js$/,
+      type: "javascript/esm",
+    });
+
+    // Exclude onnxruntime from server bundle entirely
     if (isServer) {
       config.externals = [...(config.externals || []), "onnxruntime-web"];
     }
