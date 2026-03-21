@@ -55,6 +55,14 @@ Before your first production deploy, confirm:
 
 This repo includes a `vercel.json` with sane defaults for build/install and a Next.js framework hint.
 
+### Background remover deployment fix (important)
+
+If background removal fails in production, add this env var in Vercel:
+
+`NEXT_PUBLIC_BG_MODEL_PATH=https://cdn.jsdelivr.net/npm/@imgly/background-removal-data@1.7.0/dist/`
+
+You can also host the model files yourself and point this var to your own public path.
+
 ---
 
 ## Adding a New Tool

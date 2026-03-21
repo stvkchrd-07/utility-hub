@@ -3,6 +3,7 @@ const nextConfig = {
   webpack: (config, { isServer }) => {
     config.resolve.fallback = { fs: false, path: false };
 
+    // Avoid bundling WebGPU variant that breaks minification in this setup.
     // Fix onnxruntime-web conflicts
     config.resolve.alias = {
       ...config.resolve.alias,
@@ -11,6 +12,11 @@ const nextConfig = {
 
     // Ensure onnxruntime ESM bundle is parsed correctly during production builds.
     config.module.rules.push({
+      test: /ort(\.webgpu)?\.bundle\.min\.m?js$/,
+      type: "javascript/esm",
+    });
+
+    // Keep onnxruntime out of the server bundle (tool is client-only).
       test: /ort\.bundle\.min\.m?js$/,
       type: "javascript/esm",
     });
