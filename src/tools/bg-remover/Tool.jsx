@@ -38,9 +38,23 @@ export default function BgRemoverTool() {
 
     try {
       // Dynamically import to avoid SSR issues
-      const { removeBackground } = await import("@imgly/background-removal");
+      const { remove, newSession, rembgConfig } = await import("@bunnio/rembg-web");
       setProgress(30);
 
+      if (process.env.NEXT_PUBLIC_REMBG_MODEL_URL) {
+        rembgConfig.setCustomModelPath(
+          "u2netp",
+          process.env.NEXT_PUBLIC_REMBG_MODEL_URL
+        );
+      }
+
+      const session = newSession("u2netp");
+      const blob = await remove(originalImage.file, {
+        session,
+        onProgress: (info) => {
+          if (typeof info?.progress === "number") {
+            const pct = Math.round(info.progress);
+            setProgress(Math.max(30, Math.min(pct, 95)));
       const modelSources = [
         process.env.NEXT_PUBLIC_BG_MODEL_PATH,
         "https://cdn.jsdelivr.net/npm/@imgly/background-removal-data@1.7.0/dist/",
@@ -89,6 +103,7 @@ export default function BgRemoverTool() {
     } catch (err) {
       console.error(err);
       setError(
+        "Background removal failed. Set NEXT_PUBLIC_REMBG_MODEL_URL in Vercel or check model/CDN access."
         "Background removal failed. Set NEXT_PUBLIC_BG_MODEL_PATH in Vercel, or allow jsdelivr/unpkg."
         "Background removal failed. Please retry (network/model download may be blocked)."
       );
