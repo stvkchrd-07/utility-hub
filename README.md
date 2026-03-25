@@ -57,13 +57,13 @@ This repo includes a `vercel.json` with sane defaults for build/install and a Ne
 
 ### Background remover deployment fix (important)
 
-This project now uses `@bunnio/rembg-web` with `u2netp` by default.
+This project now uses `@bunnio/rembg-web` with the `silueta` model by default.
 
-On install, a script downloads `u2netp.onnx` into `public/models/u2netp.onnx`.
+On `npm run dev`/`npm run build`, a script downloads `silueta.onnx` into `public/models/silueta.onnx` when missing.
 
 If you want to host your own model URL (for CDN/custom storage), add this env var in Vercel:
 
-`NEXT_PUBLIC_REMBG_MODEL_URL=https://your-domain.com/models/u2netp.onnx`
+`NEXT_PUBLIC_REMBG_MODEL_URL=https://your-domain.com/models/silueta.onnx`
 
 ---
 

@@ -2,11 +2,13 @@
   "name": "utility-hub",
   "version": "0.1.0",
   "private": true,
-"scripts": {
+  "scripts": {
     "dev": "next dev",
-    "build": "node scripts/fetch-rembg-model.mjs && next build",
+    "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "predev": "node scripts/fetch-rembg-model.mjs",
+    "prebuild": "node scripts/fetch-rembg-model.mjs"
   },
   "dependencies": {
     "@bunnio/rembg-web": "^1.0.2",
