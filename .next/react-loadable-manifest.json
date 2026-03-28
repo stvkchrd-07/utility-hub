@@ -1,10 +1,4 @@
 {
-  "tools\\bg-remover\\Tool.jsx -> @huggingface/transformers": {
-    "id": "tools\\bg-remover\\Tool.jsx -> @huggingface/transformers",
-    "files": [
-      "static/chunks/_app-pages-browser_node_modules_huggingface_transformers_dist_transformers_web_js.js"
-    ]
-  },
   "tools\\qr-generator\\Tool.jsx -> qr-code-styling": {
     "id": "tools\\qr-generator\\Tool.jsx -> qr-code-styling",
     "files": [
