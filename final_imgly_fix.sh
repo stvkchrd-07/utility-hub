@@ -1,8 +1,21 @@
+#!/bin/bash
+
+# 1. Clean up the corrupted files and old library
+echo "Cleaning up corrupted models and old libraries..."
+rm -rf public/models/rmbg-1.4
+npm uninstall @huggingface/transformers
+
+# 2. Install the robust IMGLY background removal library
+echo "Installing @imgly/background-removal..."
+npm install @imgly/background-removal
+
+# 3. Update Tool.jsx to use IMGLY (Much simpler and more reliable)
+echo "Updating src/tools/bg-remover/Tool.jsx..."
+cat << 'INNER_EOF' > src/tools/bg-remover/Tool.jsx
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-// FIX: Added curly braces for the named export
-import { removeBackground } from "@imgly/background-removal";
+import removeBackground from "@imgly/background-removal";
 
 export default function BgRemoverTool() {
   const fileInputRef = useRef(null);
@@ -127,3 +140,9 @@ export default function BgRemoverTool() {
     </div>
   );
 }
+INNER_EOF
+
+# 4. Clean Next.js cache and restart
+echo "Cleaning cache..."
+rm -rf .next
+echo "Done! Run 'npm run dev' to test the new, unblocked background remover."
