@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 
 export default function BgRemoverTool() {
   const fileInputRef = useRef(null);
@@ -10,9 +10,15 @@ export default function BgRemoverTool() {
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState(null);
 
+  useEffect(() => {
+    return () => {
+      if (originalImage?.url) URL.revokeObjectURL(originalImage.url);
+      if (resultImage) URL.revokeObjectURL(resultImage);
+    };
+  }, [originalImage, resultImage]);
+
   const handleFile = (file) => {
     if (!file || !file.type.startsWith("image/")) return;
-
     if (originalImage?.url) URL.revokeObjectURL(originalImage.url);
     if (resultImage) URL.revokeObjectURL(resultImage);
 
@@ -28,45 +34,68 @@ export default function BgRemoverTool() {
 
     setIsProcessing(true);
     setError(null);
-    setProgress(10);
+    setProgress(0);
 
     try {
-      const { remove, newSession, rembgConfig } = await import("@bunnio/rembg-web");
-      const ort = await import("onnxruntime-web");
+      // Import from the official @huggingface/transformers v3 package
+      const { pipeline, env, RawImage } = await import("@huggingface/transformers");
+      
+      // OPTIMIZATION: Use WebAssembly only to avoid 'onnxruntime_binding.node' errors
+      env.allowLocalModels = false;
+      env.backends.onnx.wasm.proxy = false;
 
-      ort.env.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.18.0/dist/";
-
-      setProgress(30);
-
-      // Prefer env-configured model, then local model, then hosted fallback.
-      const modelPath =
-        process.env.NEXT_PUBLIC_REMBG_MODEL_URL ||
-        (typeof window !== "undefined" ? `${window.location.origin}/models/silueta.onnx` : "/models/silueta.onnx");
-
-      rembgConfig.setCustomModelPath("silueta", modelPath);
-
-      const session = newSession("silueta");
-
-      const blob = await remove(originalImage.file, {
-        session,
-        onProgress: (info) => {
-          if (typeof info?.progress === "number") {
-            setProgress(Math.max(30, Math.min(Math.round(info.progress), 95)));
-          }
+      // Use the 'Xenova' version which is quantized (45MB) and compatible with Transformers.js
+      const segmenter = await pipeline("image-segmentation", "Xenova/RMBG-1.4", {
+        progress_callback: (p) => {
+          if (p.status === "progress") setProgress(Math.round(p.progress));
         },
       });
 
-      setResultImage(URL.createObjectURL(blob));
-      setProgress(100);
+      // Load image into library's RawImage format for cleaner processing
+      const img = await RawImage.fromURL(originalImage.url);
+      const output = await segmenter(img);
+      
+      // Apply mask to original image via canvas
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d");
+      
+      // Draw original
+      const originalCanvasImage = await originalImageToBitmap(originalImage.url, img.width, img.height);
+      ctx.drawImage(originalCanvasImage, 0, 0);
+      
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const { data } = imageData;
+
+      // output.mask contains alpha values [0-255]
+      for (let i = 0; i < output.mask.data.length; ++i) {
+        data[i * 4 + 3] = output.mask.data[i];
+      }
+
+      ctx.putImageData(imageData, 0, 0);
+
+      canvas.toBlob((blob) => {
+        setResultImage(URL.createObjectURL(blob));
+        setProgress(100);
+      });
+
     } catch (err) {
-      console.error(err);
-      setError(
-        "Background removal failed. Make sure /public/models/silueta.onnx exists or set NEXT_PUBLIC_REMBG_MODEL_URL to a reachable model URL.",
-      );
+      console.error("Hugging Face Error:", err);
+      setError("Incompatible model or connection issue. Ensure you are using Xenova/RMBG-1.4.");
     } finally {
       setIsProcessing(false);
     }
   };
+
+  // Helper to ensure original image is loaded correctly for canvas drawing
+  async function originalImageToBitmap(url, w, h) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.src = url;
+    });
+  }
 
   const handleDownload = () => {
     if (!resultImage) return;
@@ -125,8 +154,6 @@ export default function BgRemoverTool() {
 
             <button
               onClick={() => {
-                if (originalImage?.url) URL.revokeObjectURL(originalImage.url);
-                if (resultImage) URL.revokeObjectURL(resultImage);
                 setOriginalImage(null);
                 setResultImage(null);
                 setError(null);
