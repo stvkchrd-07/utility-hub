@@ -49,6 +49,16 @@ export default function BgRemoverTool() {
     }
   };
 
+  const handleDownload = () => {
+    if (!resultImage) return;
+    const a = document.createElement("a");
+    a.href = resultImage;
+    a.download = "background-removed.png";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
   return (
     <div className="space-y-8">
       {!originalImage && (
@@ -70,7 +80,7 @@ export default function BgRemoverTool() {
             <div className="p-4 border border-border rounded-lg bg-[url('https://www.transparenttextures.com/patterns/checkerboard.png')]">
               {resultImage ? <img src={resultImage} alt="Result" className="max-h-64 mx-auto object-contain" /> : <div className="h-64 flex items-center justify-center text-muted font-mono">Result Preview</div>}
             </div>
-            <button onClick={() => resultImage && window.open(resultImage)} disabled={!resultImage} className="w-full bg-accent text-bg font-bold py-3 rounded-lg disabled:opacity-50">Download PNG</button>
+            <button onClick={handleDownload} disabled={!resultImage} className="w-full bg-accent text-bg font-bold py-3 rounded-lg disabled:opacity-50">Download PNG</button>
             {error && <p className="text-red-500 text-xs mt-2 font-mono">{error}</p>}
           </div>
         </div>
