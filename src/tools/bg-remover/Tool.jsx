@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-// FIX: Added curly braces for the named export
 import { removeBackground } from "@imgly/background-removal";
 
 export default function BgRemoverTool() {
@@ -21,10 +20,8 @@ export default function BgRemoverTool() {
 
   const handleFile = (file) => {
     if (!file || !file.type.startsWith("image/")) return;
-    
     if (originalImage?.url) URL.revokeObjectURL(originalImage.url);
     if (resultImage) URL.revokeObjectURL(resultImage);
-
     const url = URL.createObjectURL(file);
     setOriginalImage({ file, url });
     setResultImage(null);
@@ -34,92 +31,46 @@ export default function BgRemoverTool() {
 
   const handleRemoveBackground = async () => {
     if (!originalImage?.file) return;
-
     setIsProcessing(true);
     setError(null);
-    setProgress(0);
-
     try {
-      // IMGLY handles all WASM and Model loading internally via reliable CDNs
       const blob = await removeBackground(originalImage.file, {
         progress: (key, current, total) => {
-          // Calculate overall progress based on download and processing steps
-          if (total > 0) {
-            const percentage = Math.round((current / total) * 100);
-            setProgress(Math.min(percentage, 99)); // Keep at 99% until fully done
-          }
+          if (total > 0) setProgress(Math.round((current / total) * 100));
         }
       });
-
-      if (resultImage) URL.revokeObjectURL(resultImage);
       setResultImage(URL.createObjectURL(blob));
       setProgress(100);
-
     } catch (err) {
-      console.error("Background Removal Error:", err);
+      console.error(err);
       setError(`Failed to process image: ${err.message}`);
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const handleDownload = () => {
-    if (!resultImage) return;
-    const a = document.createElement("a");
-    a.href = resultImage;
-    a.download = "no-bg.png";
-    a.click();
-  };
-
   return (
     <div className="space-y-8">
       {!originalImage && (
-        <div
-          onClick={() => fileInputRef.current?.click()}
-          className="border-2 border-dashed border-border rounded-xl p-16 text-center cursor-pointer hover:border-ink transition-colors"
-        >
+        <div onClick={() => fileInputRef.current?.click()} className="border-2 border-dashed border-border rounded-xl p-16 text-center cursor-pointer hover:border-ink transition-colors">
           <div className="text-5xl mb-4">✨</div>
           <p className="font-display font-bold text-xl text-ink">Upload image to remove background</p>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => handleFile(e.target.files?.[0])}
-          />
+          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleFile(e.target.files?.[0])} />
         </div>
       )}
-
       {originalImage && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="space-y-4">
-            <div className="p-4 border border-border rounded-lg bg-bg">
-              <img src={originalImage.url} alt="Original" className="max-h-64 mx-auto object-contain" />
-            </div>
-            <button
-              onClick={handleRemoveBackground}
-              disabled={isProcessing}
-              className="w-full bg-ink text-bg font-bold py-3 rounded-lg disabled:opacity-50"
-            >
+            <div className="p-4 border border-border rounded-lg bg-bg"><img src={originalImage.url} alt="Original" className="max-h-64 mx-auto object-contain" /></div>
+            <button onClick={handleRemoveBackground} disabled={isProcessing} className="w-full bg-ink text-bg font-bold py-3 rounded-lg disabled:opacity-50">
               {isProcessing ? `Processing... ${progress}%` : "Remove Background"}
             </button>
           </div>
-
           <div className="space-y-4">
             <div className="p-4 border border-border rounded-lg bg-[url('https://www.transparenttextures.com/patterns/checkerboard.png')]">
-              {resultImage ? (
-                <img src={resultImage} alt="Result" className="max-h-64 mx-auto object-contain" />
-              ) : (
-                <div className="h-64 flex items-center justify-center text-muted font-mono">Result Preview</div>
-              )}
+              {resultImage ? <img src={resultImage} alt="Result" className="max-h-64 mx-auto object-contain" /> : <div className="h-64 flex items-center justify-center text-muted font-mono">Result Preview</div>}
             </div>
-            <button
-              onClick={handleDownload}
-              disabled={!resultImage}
-              className="w-full bg-accent text-bg font-bold py-3 rounded-lg disabled:opacity-50"
-            >
-              Download PNG
-            </button>
+            <button onClick={() => resultImage && window.open(resultImage)} disabled={!resultImage} className="w-full bg-accent text-bg font-bold py-3 rounded-lg disabled:opacity-50">Download PNG</button>
             {error && <p className="text-red-500 text-xs mt-2 font-mono">{error}</p>}
           </div>
         </div>
