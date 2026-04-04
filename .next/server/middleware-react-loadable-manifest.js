@@ -1,1 +1,1 @@
-self.__REACT_LOADABLE_MANIFEST="{}"
+self.__REACT_LOADABLE_MANIFEST='{"tools\\\\qr-generator\\\\Tool.jsx -> qr-code-styling":{"id":8718,"files":["static/chunks/718.792f2d0aed23c998.js"]}}';
