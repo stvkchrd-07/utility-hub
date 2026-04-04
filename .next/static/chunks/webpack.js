@@ -91,18 +91,6 @@
 /******/ 		};
 /******/ 	}();
 /******/ 	
-/******/ 	/* webpack/runtime/compat get default export */
-/******/ 	!function() {
-/******/ 		// getDefaultExport function for compatibility with non-harmony modules
-/******/ 		__webpack_require__.n = function(module) {
-/******/ 			var getter = module && module.__esModule ?
-/******/ 				function() { return module['default']; } :
-/******/ 				function() { return module; };
-/******/ 			__webpack_require__.d(getter, { a: getter });
-/******/ 			return getter;
-/******/ 		};
-/******/ 	}();
-/******/ 	
 /******/ 	/* webpack/runtime/create fake namespace object */
 /******/ 	!function() {
 /******/ 		var getProto = Object.getPrototypeOf ? function(obj) { return Object.getPrototypeOf(obj); } : function(obj) { return obj.__proto__; };
@@ -163,7 +151,7 @@
 /******/ 		// This function allow to reference async chunks
 /******/ 		__webpack_require__.u = function(chunkId) {
 /******/ 			// return url for filenames based on template
-/******/ 			return "static/chunks/" + chunkId + ".js";
+/******/ 			return undefined;
 /******/ 		};
 /******/ 	}();
 /******/ 	
@@ -192,7 +180,7 @@
 /******/ 	
 /******/ 	/* webpack/runtime/getFullHash */
 /******/ 	!function() {
-/******/ 		__webpack_require__.h = function() { return "44058a3586294b21"; }
+/******/ 		__webpack_require__.h = function() { return "dd944127502188f2"; }
 /******/ 	}();
 /******/ 	
 /******/ 	/* webpack/runtime/global */
@@ -276,21 +264,6 @@
 /******/ 			if (!module.children) module.children = [];
 /******/ 			return module;
 /******/ 		};
-/******/ 	}();
-/******/ 	
-/******/ 	/* webpack/runtime/relative url */
-/******/ 	!function() {
-/******/ 		__webpack_require__.U = function RelativeURL(url) {
-/******/ 			var realUrl = new URL(url, "x:/");
-/******/ 			var values = {};
-/******/ 			for (var key in realUrl) values[key] = realUrl[key];
-/******/ 			values.href = url;
-/******/ 			values.pathname = url.replace(/[?#].*/, "");
-/******/ 			values.origin = values.protocol = "";
-/******/ 			values.toString = values.toJSON = function() { return url; };
-/******/ 			for (var key in values) Object.defineProperty(this, key, { enumerable: true, configurable: true, value: values[key] });
-/******/ 		};
-/******/ 		__webpack_require__.U.prototype = URL.prototype;
 /******/ 	}();
 /******/ 	
 /******/ 	/* webpack/runtime/trusted types policy */
