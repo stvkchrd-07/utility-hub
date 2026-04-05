@@ -2,15 +2,14 @@
 const nextConfig = {
   reactStrictMode: true,
   webpack: (config) => {
-    // Fixes the Vercel build error by ignoring the Node.js AI bindings
-    // since we only use the browser (WASM) version.
+    // This exact alias completely fixes the "import.meta" Vercel deployment error
+    // by stopping Webpack from trying to bundle the Node-specific ONNX files.
     config.resolve.alias = {
       ...config.resolve.alias,
-      "onnxruntime-node": false,
+      "sharp$": false,
+      "onnxruntime-node$": false,
     };
-    
     return config;
   },
 };
-
 export default nextConfig;
