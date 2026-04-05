@@ -2,13 +2,22 @@
 const nextConfig = {
   reactStrictMode: true,
   webpack: (config) => {
-    // This exact alias completely fixes the "import.meta" Vercel deployment error
-    // by stopping Webpack from trying to bundle the Node-specific ONNX files.
+    // Ignore Node-specific modules when bundling for the browser
     config.resolve.alias = {
       ...config.resolve.alias,
       "sharp$": false,
       "onnxruntime-node$": false,
     };
+    
+    // CRITICAL FIX: Stops Next.js/Vercel from crashing on ONNX runtime's import.meta syntax
+    config.module.parser = {
+      ...config.module.parser,
+      javascript: {
+        ...config.module.parser?.javascript,
+        importMeta: false,
+      },
+    };
+    
     return config;
   },
 };

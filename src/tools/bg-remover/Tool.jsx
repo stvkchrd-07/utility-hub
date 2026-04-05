@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Dropzone from "@/components/tool-ui/Dropzone";
 import { useBlobManager } from "@/hooks/useBlobManager";
 
 export default function BgRemoverTool() {
   const { createUrl } = useBlobManager();
+  const workerRef = useRef(null);
   
   const [originalImage, setOriginalImage] = useState(null);
   const [resultImage, setResultImage] = useState(null);
@@ -13,6 +14,35 @@ export default function BgRemoverTool() {
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState(null);
   const [statusText, setStatusText] = useState("");
+
+  useEffect(() => {
+    // Initialize the Web Worker on the client side
+    workerRef.current = new Worker(new URL('./worker.js', import.meta.url), {
+      type: 'module'
+    });
+
+    workerRef.current.onmessage = (event) => {
+      const { status, progress, text, blob, error } = event.data;
+      
+      if (status === 'init' || status === 'processing') {
+        setStatusText(text);
+        if (status === 'init') setProgress(5);
+        if (status === 'processing') setProgress(85);
+      } else if (status === 'progress') {
+        setProgress(Math.round(5 + (progress * 0.75)));
+      } else if (status === 'done') {
+        setResultImage(createUrl(blob));
+        setProgress(100);
+        setStatusText("Done!");
+        setIsProcessing(false);
+      } else if (status === 'error') {
+        setError(`Failed to process image: ${error}`);
+        setIsProcessing(false);
+      }
+    };
+
+    return () => workerRef.current?.terminate();
+  }, [createUrl]);
 
   const handleFile = (file) => {
     if (!file || !file.type.startsWith("image/")) return;
@@ -23,53 +53,11 @@ export default function BgRemoverTool() {
     setStatusText("");
   };
 
-  const handleRemoveBackground = async () => {
-    if (!originalImage?.file) return;
+  const handleRemoveBackground = () => {
+    if (!originalImage?.url) return;
     setIsProcessing(true);
     setError(null);
-    setProgress(5);
-    setStatusText("Initializing Hugging Face AI...");
-    
-    try {
-      // Lazy load the Hugging Face pipeline
-      const { pipeline, env } = await import("@huggingface/transformers");
-      
-      // Ensure we pull the model directly from the Hugging Face Hub
-      env.allowLocalModels = false;
-      
-      setStatusText("Loading RMBG-1.4 Model...");
-      
-      // Initialize the official background-removal pipeline
-      const segmenter = await pipeline("background-removal", "briaai/RMBG-1.4", {
-        progress_callback: (p) => {
-          if (p.status === 'progress' && p.progress) {
-            setProgress(Math.round(5 + (p.progress * 0.75))); // Scale download progress
-          }
-        }
-      });
-      
-      setProgress(85);
-      setStatusText("Extracting foreground...");
-      
-      // Run the image through the Hugging Face model
-      const output = await segmenter(originalImage.url);
-      
-      setProgress(95);
-      setStatusText("Finalizing image...");
-      
-      // The background-removal pipeline returns a RawImage object. We convert it to a transparent PNG.
-      const result = Array.isArray(output) ? output[0] : output;
-      const blob = await result.toBlob('image/png');
-      
-      setResultImage(createUrl(blob));
-      setProgress(100);
-      setStatusText("Done!");
-    } catch (err) {
-      console.error(err);
-      setError(`Failed to process image: ${err.message}`);
-    } finally {
-      setIsProcessing(false);
-    }
+    workerRef.current.postMessage({ imageUrl: originalImage.url });
   };
 
   const handleDownload = () => {
@@ -89,7 +77,7 @@ export default function BgRemoverTool() {
           onFile={handleFile} 
           accept="image/*" 
           title="Upload image to remove background" 
-          subtitle="Powered by Hugging Face (RMBG-1.4)"
+          subtitle="Powered by Hugging Face (briaai/RMBG-1.4)"
         />
       )}
       
