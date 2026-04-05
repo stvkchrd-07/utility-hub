@@ -1,3 +1,69 @@
+#!/bin/bash
+echo "Pivoting Background Remover to Hugging Face API..."
+
+# 1. Remove the heavy local AI library and worker file
+npm uninstall @huggingface/transformers
+rm -f src/tools/bg-remover/worker.js
+
+# 2. Reset next.config.mjs to standard (we no longer need Webpack WASM hacks!)
+cat << 'INNER_EOF' > next.config.mjs
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+};
+export default nextConfig;
+INNER_EOF
+
+# 3. Create the secure backend API route
+mkdir -p src/app/api/remove-bg
+cat << 'INNER_EOF' > src/app/api/remove-bg/route.js
+import { NextResponse } from 'next/server';
+
+export async function POST(request) {
+  try {
+    const formData = await request.formData();
+    const image = formData.get('image');
+
+    if (!image) {
+      return NextResponse.json({ error: "No image provided" }, { status: 400 });
+    }
+
+    // Send the image to Hugging Face's Inference API securely
+    const response = await fetch(
+      "https://api-inference.huggingface.co/models/briaai/RMBG-1.4",
+      {
+        headers: { Authorization: `Bearer ${process.env.HF_API_TOKEN}` },
+        method: "POST",
+        body: image,
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("HF API Error:", errorText);
+      
+      // Handle model loading state (HF sometimes takes a few seconds to wake up the model)
+      if (response.status === 503 && errorText.includes("currently loading")) {
+         throw new Error("Model is waking up. Please try again in 15 seconds.");
+      }
+      
+      throw new Error("Hugging Face API failed or rate limited.");
+    }
+
+    // Return the transparent PNG back to the frontend
+    const blob = await response.blob();
+    return new NextResponse(blob, {
+      headers: { 'Content-Type': 'image/png' }
+    });
+
+  } catch (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+INNER_EOF
+
+# 4. Update the Frontend Tool to use the API
+cat << 'INNER_EOF' > src/tools/bg-remover/Tool.jsx
 "use client";
 
 import { useState } from "react";
@@ -113,3 +179,12 @@ export default function BgRemoverTool() {
     </div>
   );
 }
+INNER_EOF
+
+# 5. Create local environment file template
+cat << 'INNER_EOF' > .env.local
+# Paste your Hugging Face Access Token here (starts with hf_...)
+HF_API_TOKEN=your_token_here
+INNER_EOF
+
+echo "Done! The API architecture is set up."
