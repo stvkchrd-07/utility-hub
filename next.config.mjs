@@ -1,19 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  reactStrictMode: true,
   webpack: (config) => {
-    // Prevent Webpack from trying to bundle binary files meant for server-side ONNX
-    config.resolve.fallback = { 
-      ...config.resolve.fallback,
-      fs: false, 
-      path: false,
+    // Fixes the Vercel build error by ignoring the Node.js AI bindings
+    // since we only use the browser (WASM) version.
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      "onnxruntime-node": false,
     };
-
-    // Ignore binary .node files which cause the 'Unexpected character' error
-    config.module.rules.push({
-      test: /\.node$/,
-      use: 'null-loader',
-    });
-
+    
     return config;
   },
 };
