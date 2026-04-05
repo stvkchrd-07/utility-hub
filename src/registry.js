@@ -1,17 +1,13 @@
-// ─────────────────────────────────────────────
-//  TOOL REGISTRY
-//  To add a new tool:
-//  1. Create /src/tools/your-tool/meta.js
-//  2. Create /src/tools/your-tool/Tool.jsx
-//  3. Import meta here and add to the array
-// ─────────────────────────────────────────────
-
+// AUTO-GENERATED FILE. DO NOT EDIT MANUALLY.
 import bgRemoverMeta from "./tools/bg-remover/meta";
+import bgRemoverComponent from "./tools/bg-remover/Tool";
 import imageResizeMeta from "./tools/image-resize/meta";
+import imageResizeComponent from "./tools/image-resize/Tool";
 import qrGeneratorMeta from "./tools/qr-generator/meta";
+import qrGeneratorComponent from "./tools/qr-generator/Tool";
 
-export const tools = [bgRemoverMeta, imageResizeMeta, qrGeneratorMeta];
-
-export function getToolById(id) {
-  return tools.find((t) => t.id === id) || null;
-}
+export const tools = [
+  { ...bgRemoverMeta, component: bgRemoverComponent },
+  { ...imageResizeMeta, component: imageResizeComponent },
+  { ...qrGeneratorMeta, component: qrGeneratorComponent },
+];

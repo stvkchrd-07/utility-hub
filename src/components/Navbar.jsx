@@ -1,62 +1,42 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import CommandPalette from "./CommandPalette";
+import { useEffect, useState } from "react";
 
 export default function Navbar() {
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [isMac, setIsMac] = useState(false);
+
+  useEffect(() => {
+    setIsMac(navigator.platform.toUpperCase().indexOf('MAC') >= 0);
+  }, []);
+
+  const triggerSearch = () => {
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true, ctrlKey: true }));
+  };
 
   return (
-    <nav className="sticky top-0 z-50 bg-bg/90 backdrop-blur-sm border-b border-border">
-      <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-        <Link href="/" className="font-display font-black text-xl text-ink tracking-tight hover:text-accent transition-colors">
-          utility<span className="text-accent">hub</span>
+    <>
+      <nav className="fixed top-0 left-0 right-0 h-16 border-b border-border bg-bg/90 backdrop-blur z-40 flex items-center justify-between px-6 sm:px-12">
+        <Link href="/" className="font-display font-bold text-xl text-ink tracking-tight flex items-center gap-2 hover:opacity-70 transition-opacity">
+          <span className="w-4 h-4 bg-ink rounded-sm animate-pulse"></span>
+          UtilityHub
         </Link>
-
-        <div className="hidden md:flex items-center gap-8">
-          <Link href="/#tools" className="text-sm font-mono text-muted hover:text-ink transition-colors">
-            Tools
-          </Link>
-          <Link href="/#about" className="text-sm font-mono text-muted hover:text-ink transition-colors">
-            About
-          </Link>
-          <a
-            href="https://github.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm font-mono text-ink border border-border px-4 py-1.5 rounded-lg hover:border-ink hover:bg-card transition-all"
-          >
-            GitHub ↗
-          </a>
-        </div>
-
-        {/* Mobile menu toggle */}
-        <button
-          className="md:hidden text-ink"
-          onClick={() => setMenuOpen(!menuOpen)}
+        
+        <button 
+          onClick={triggerSearch}
+          className="flex items-center gap-2 sm:gap-8 text-xs font-mono text-muted bg-card hover:bg-border px-3 py-1.5 rounded-md border border-border transition-colors group"
         >
-          {menuOpen ? "✕" : "☰"}
+          <span className="hidden sm:inline">Search tools...</span>
+          <span className="sm:hidden">Search</span>
+          <kbd className="font-sans font-bold bg-bg px-1.5 py-0.5 rounded border border-border group-hover:border-muted transition-colors">
+            {isMac ? '⌘K' : 'Ctrl K'}
+          </kbd>
         </button>
-      </div>
-
-      {menuOpen && (
-        <div className="md:hidden border-t border-border bg-bg px-6 py-4 space-y-4">
-          <Link href="/#tools" className="block text-sm font-mono text-ink" onClick={() => setMenuOpen(false)}>
-            Tools
-          </Link>
-          <Link href="/#about" className="block text-sm font-mono text-ink" onClick={() => setMenuOpen(false)}>
-            About
-          </Link>
-          <a
-            href="https://github.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block text-sm font-mono text-ink"
-          >
-            GitHub ↗
-          </a>
-        </div>
-      )}
-    </nav>
+      </nav>
+      
+      {/* The invisible search modal that lives on every page */}
+      <CommandPalette />
+    </>
   );
 }

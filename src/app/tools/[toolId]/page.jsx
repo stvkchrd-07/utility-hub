@@ -1,78 +1,36 @@
+import { tools } from "@/registry";
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { getToolById, tools } from "@/registry";
 
-export const dynamic = "force-dynamic";
-
+// PRE-BUILD EXPORT: This tells Next.js to compile all 50+ tools into static HTML at build time
 export function generateStaticParams() {
   return tools.map((tool) => ({ toolId: tool.id }));
 }
 
-export async function generateMetadata({ params }) {
-  const tool = getToolById(params.toolId);
-  if (!tool) return { title: "Tool not found" };
-  return {
-    title: `${tool.name} — UtilityHub`,
-    description: tool.description,
-  };
-}
+export default function ToolPage({ params }) {
+  const tool = tools.find((t) => t.id === params.toolId);
+  
+  if (!tool) {
+    notFound();
+  }
 
-const toolComponents = {
-  "bg-remover":   () => import("@/tools/bg-remover/Tool"),
-  "image-resize": () => import("@/tools/image-resize/Tool"),
-  "qr-generator": () => import("@/tools/qr-generator/Tool"),
-  // ─── Add new tools here ───
-  // "your-tool-id": () => import("@/tools/your-tool/Tool"),
-};
-
-export default async function ToolPage({ params }) {
-  const tool = getToolById(params.toolId);
-  if (!tool) notFound();
-
-  const loader = toolComponents[params.toolId];
-  if (!loader) notFound();
-
-  const { default: ToolComponent } = await loader();
+  const ToolComponent = tool.component;
 
   return (
-    <main className="min-h-screen">
+    <div className="min-h-screen flex flex-col">
       <Navbar />
-
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-        <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-muted mb-6 sm:mb-8 animate-fade-up anim-delay-1">
-          <a href="/" className="hover:text-ink transition-colors">Home</a>
-          <span>→</span>
-          <a href="/#tools" className="hover:text-ink transition-colors">Tools</a>
-          <span>→</span>
-          <span className="text-ink">{tool.name}</span>
+      <main className="flex-grow pt-24 pb-16 px-6 sm:px-12 max-w-7xl mx-auto w-full">
+        <div className="mb-10">
+          <h1 className="text-3xl sm:text-4xl font-display font-bold text-ink mb-2">
+            {tool.name}
+          </h1>
+          <p className="text-muted font-mono">{tool.description}</p>
         </div>
-
-        <div className="mb-8 sm:mb-10 animate-fade-up anim-delay-2">
-          <div className="flex items-start gap-4">
-            <span className="text-3xl sm:text-4xl text-accent">{tool.icon}</span>
-            <div>
-              <h1 className="font-display font-black text-3xl sm:text-4xl text-ink">{tool.name}</h1>
-              <p className="text-muted mt-2 leading-relaxed max-w-lg">{tool.description}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="border-t border-border mb-10" />
-
-        <div className="animate-fade-up anim-delay-3">
-          <Suspense fallback={
-            <div className="text-center py-20 text-muted font-mono text-sm">
-              Loading tool…
-            </div>
-          }>
-            <ToolComponent />
-          </Suspense>
-        </div>
-      </div>
-
+        
+        <ToolComponent />
+      </main>
       <Footer />
-    </main>
+    </div>
   );
 }

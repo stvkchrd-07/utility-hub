@@ -1,3 +1,7 @@
+#!/bin/bash
+echo "Adding Navbar and Footer to the Home Page..."
+
+cat << 'EOF' > src/app/page.jsx
 import { tools } from "@/registry";
 import ToolCard from "@/components/ToolCard";
 import Navbar from "@/components/Navbar";
@@ -50,3 +54,9 @@ export default function Home() {
     </div>
   );
 }
+EOF
+
+echo "Cleaning up..."
+rm fix-nav.sh
+
+echo "Done! The landing page is updated."
