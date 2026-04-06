@@ -1,74 +1,87 @@
 #!/bin/bash
-echo "Pivoting Background Remover to Hugging Face API..."
+echo "Pivoting Background Remover to Remove.bg API..."
 
-# 1. Remove the heavy local AI library and worker file
-npm uninstall @huggingface/transformers
-rm -f src/tools/bg-remover/worker.js
-
-# 2. Reset next.config.mjs to standard (we no longer need Webpack WASM hacks!)
-cat << 'INNER_EOF' > next.config.mjs
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  reactStrictMode: true,
-};
-export default nextConfig;
-INNER_EOF
-
-# 3. Create the secure backend API route
-mkdir -p src/app/api/remove-bg
+# 1. Rebuild the Backend API for remove.bg
 cat << 'INNER_EOF' > src/app/api/remove-bg/route.js
 import { NextResponse } from 'next/server';
 
 export async function POST(request) {
   try {
-    const formData = await request.formData();
-    const image = formData.get('image');
+    const body = await request.json();
+    const { imageBase64 } = body;
 
-    if (!image) {
-      return NextResponse.json({ error: "No image provided" }, { status: 400 });
+    if (!imageBase64) {
+      return NextResponse.json({ error: "No image data provided" }, { status: 400 });
     }
 
-    // Send the image to Hugging Face's Inference API securely
-    const response = await fetch(
-      "https://api-inference.huggingface.co/models/briaai/RMBG-1.4",
-      {
-        headers: { Authorization: `Bearer ${process.env.HF_API_TOKEN}` },
-        method: "POST",
-        body: image,
-      }
-    );
+    // Send the Base64 image directly to remove.bg's official API
+    const response = await fetch("https://api.remove.bg/v1.0/removebg", {
+      method: "POST",
+      headers: {
+        "X-Api-Key": process.env.REMOVE_BG_API_KEY,
+        "Content-Type": "application/json",
+        "Accept": "image/png"
+      },
+      body: JSON.stringify({
+        image_file_b64: imageBase64,
+        size: "auto"
+      })
+    });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("HF API Error:", errorText);
-      
-      // Handle model loading state (HF sometimes takes a few seconds to wake up the model)
-      if (response.status === 503 && errorText.includes("currently loading")) {
-         throw new Error("Model is waking up. Please try again in 15 seconds.");
+      let errorMsg = "Remove.bg API Error";
+      try {
+        const errorData = await response.json();
+        if (errorData.errors && errorData.errors.length > 0) {
+          errorMsg = errorData.errors[0].title;
+        }
+      } catch (e) {
+        errorMsg = await response.text();
       }
       
-      throw new Error("Hugging Face API failed or rate limited.");
+      console.error("Remove.bg Rejected:", response.status, errorMsg);
+      
+      if (response.status === 403) {
+        return NextResponse.json({ error: "Invalid API Key. Check REMOVE_BG_API_KEY in .env.local" }, { status: 403 });
+      }
+      if (response.status === 402) {
+        return NextResponse.json({ error: "Insufficient remove.bg credits. Free tier limit reached." }, { status: 402 });
+      }
+      
+      return NextResponse.json({ error: errorMsg }, { status: response.status });
     }
 
-    // Return the transparent PNG back to the frontend
-    const blob = await response.blob();
-    return new NextResponse(blob, {
-      headers: { 'Content-Type': 'image/png' }
+    // Return the transparent PNG bytes directly to the frontend
+    const arrayBuffer = await response.arrayBuffer();
+    return new NextResponse(arrayBuffer, {
+      headers: { 
+        'Content-Type': 'image/png',
+        'Content-Length': arrayBuffer.byteLength.toString()
+      }
     });
 
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Critical Backend Crash:", error);
+    return NextResponse.json({ error: "Internal Server Error: " + error.message }, { status: 500 });
   }
 }
 INNER_EOF
 
-# 4. Update the Frontend Tool to use the API
+# 2. Rebuild the Frontend Tool (Removed complex retry loops!)
 cat << 'INNER_EOF' > src/tools/bg-remover/Tool.jsx
 "use client";
 
 import { useState } from "react";
 import Dropzone from "@/components/tool-ui/Dropzone";
 import { useBlobManager } from "@/hooks/useBlobManager";
+
+// Helper function to extract base64 text from a File
+const fileToBase64 = (file) => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.readAsDataURL(file);
+  reader.onload = () => resolve(reader.result.split(',')[1]);
+  reader.onerror = (error) => reject(error);
+});
 
 export default function BgRemoverTool() {
   const { createUrl } = useBlobManager();
@@ -80,6 +93,13 @@ export default function BgRemoverTool() {
 
   const handleFile = (file) => {
     if (!file || !file.type.startsWith("image/")) return;
+    
+    // Vercel JSON payload limits us to ~4.5MB
+    if (file.size > 4.5 * 1024 * 1024) {
+      setError("Image is too large. Please use an image under 4.5MB.");
+      return;
+    }
+    
     setOriginalImage({ file, url: createUrl(file) });
     setResultImage(null);
     setError(null);
@@ -91,24 +111,30 @@ export default function BgRemoverTool() {
     setError(null);
     
     try {
-      const formData = new FormData();
-      formData.append('image', originalImage.file);
+      const base64Data = await fileToBase64(originalImage.file);
 
-      // Call our secure Next.js API Route
       const response = await fetch('/api/remove-bg', {
         method: 'POST',
-        body: formData
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64: base64Data })
       });
 
       if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.error || "Failed to process image.");
+        let errorMessage = "Failed to process image.";
+        try {
+          const errData = await response.json();
+          errorMessage = errData.error || errorMessage;
+        } catch (e) {
+          errorMessage = `Server crashed with status ${response.status}`;
+        }
+        throw new Error(errorMessage);
       }
 
       const blob = await response.blob();
       setResultImage(createUrl(blob));
+
     } catch (err) {
-      console.error(err);
+      console.error("Frontend Error:", err);
       setError(`Error: ${err.message}`);
     } finally {
       setIsProcessing(false);
@@ -132,7 +158,7 @@ export default function BgRemoverTool() {
           onFile={handleFile} 
           accept="image/*" 
           title="Upload image to remove background" 
-          subtitle="Powered by Hugging Face API"
+          subtitle="Powered by remove.bg API"
         />
       )}
       
@@ -147,7 +173,7 @@ export default function BgRemoverTool() {
               disabled={isProcessing} 
               className="w-full bg-ink text-bg font-bold py-3 rounded-lg disabled:opacity-50 transition-opacity"
             >
-              {isProcessing ? "Processing via API..." : "Remove Background"}
+              {isProcessing ? "Processing instantly... ✨" : "Remove Background"}
             </button>
           </div>
           
@@ -158,7 +184,7 @@ export default function BgRemoverTool() {
               ) : (
                 <div className="h-64 flex flex-col items-center justify-center text-muted font-mono text-center px-4">
                   {isProcessing ? (
-                    <span className="animate-pulse">Uploading to Hugging Face... ✨</span>
+                    <span className="animate-pulse">Uploading to remove.bg...</span>
                   ) : (
                     "Result Preview"
                   )}
@@ -181,10 +207,7 @@ export default function BgRemoverTool() {
 }
 INNER_EOF
 
-# 5. Create local environment file template
-cat << 'INNER_EOF' > .env.local
-# Paste your Hugging Face Access Token here (starts with hf_...)
-HF_API_TOKEN=your_token_here
-INNER_EOF
+# 3. Create or update environment variables
+echo "REMOVE_BG_API_KEY=replace_this_with_your_key" > .env.local
 
-echo "Done! The API architecture is set up."
+echo "Done! The tool is now fully integrated with remove.bg."

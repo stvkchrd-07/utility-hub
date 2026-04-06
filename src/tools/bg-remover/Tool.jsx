@@ -4,6 +4,14 @@ import { useState } from "react";
 import Dropzone from "@/components/tool-ui/Dropzone";
 import { useBlobManager } from "@/hooks/useBlobManager";
 
+// Helper function to extract base64 text from a File
+const fileToBase64 = (file) => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.readAsDataURL(file);
+  reader.onload = () => resolve(reader.result.split(',')[1]);
+  reader.onerror = (error) => reject(error);
+});
+
 export default function BgRemoverTool() {
   const { createUrl } = useBlobManager();
   
@@ -14,6 +22,13 @@ export default function BgRemoverTool() {
 
   const handleFile = (file) => {
     if (!file || !file.type.startsWith("image/")) return;
+    
+    // Vercel JSON payload limits us to ~4.5MB
+    if (file.size > 4.5 * 1024 * 1024) {
+      setError("Image is too large. Please use an image under 4.5MB.");
+      return;
+    }
+    
     setOriginalImage({ file, url: createUrl(file) });
     setResultImage(null);
     setError(null);
@@ -25,24 +40,30 @@ export default function BgRemoverTool() {
     setError(null);
     
     try {
-      const formData = new FormData();
-      formData.append('image', originalImage.file);
+      const base64Data = await fileToBase64(originalImage.file);
 
-      // Call our secure Next.js API Route
       const response = await fetch('/api/remove-bg', {
         method: 'POST',
-        body: formData
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64: base64Data })
       });
 
       if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.error || "Failed to process image.");
+        let errorMessage = "Failed to process image.";
+        try {
+          const errData = await response.json();
+          errorMessage = errData.error || errorMessage;
+        } catch (e) {
+          errorMessage = `Server crashed with status ${response.status}`;
+        }
+        throw new Error(errorMessage);
       }
 
       const blob = await response.blob();
       setResultImage(createUrl(blob));
+
     } catch (err) {
-      console.error(err);
+      console.error("Frontend Error:", err);
       setError(`Error: ${err.message}`);
     } finally {
       setIsProcessing(false);
@@ -66,7 +87,7 @@ export default function BgRemoverTool() {
           onFile={handleFile} 
           accept="image/*" 
           title="Upload image to remove background" 
-          subtitle="Powered by Hugging Face API"
+          subtitle="Powered by remove.bg API"
         />
       )}
       
@@ -81,7 +102,7 @@ export default function BgRemoverTool() {
               disabled={isProcessing} 
               className="w-full bg-ink text-bg font-bold py-3 rounded-lg disabled:opacity-50 transition-opacity"
             >
-              {isProcessing ? "Processing via API..." : "Remove Background"}
+              {isProcessing ? "Processing instantly... ✨" : "Remove Background"}
             </button>
           </div>
           
@@ -92,7 +113,7 @@ export default function BgRemoverTool() {
               ) : (
                 <div className="h-64 flex flex-col items-center justify-center text-muted font-mono text-center px-4">
                   {isProcessing ? (
-                    <span className="animate-pulse">Uploading to Hugging Face... ✨</span>
+                    <span className="animate-pulse">Uploading to remove.bg...</span>
                   ) : (
                     "Result Preview"
                   )}
