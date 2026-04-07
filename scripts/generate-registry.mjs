@@ -10,7 +10,7 @@ const registryFile = path.join(__dirname, '../src/registry.js');
 
 const toolFolders = fs.readdirSync(toolsDir).filter(f => fs.statSync(path.join(toolsDir, f)).isDirectory());
 
-let imports = '// AUTO-GENERATED FILE. DO NOT EDIT MANUALLY.\n';
+let imports = '// AUTO-GENERATED FILE. DO NOT EDIT MANUALLY.\nimport dynamic from "next/dynamic";\n';
 let exports = 'export const tools = [\n';
 
 toolFolders.forEach(folder => {
@@ -18,16 +18,14 @@ toolFolders.forEach(folder => {
   const toolPath = path.join(toolsDir, folder, 'Tool.jsx');
   
   if (fs.existsSync(metaPath)) {
-    // Format variables (e.g., bg-remover -> bgRemoverMeta / bgRemoverComponent)
     const varName = folder.replace(/-([a-z])/g, g => g[1].toUpperCase()) + 'Meta';
     const compName = folder.replace(/-([a-z])/g, g => g[1].toUpperCase()) + 'Component';
     
-    // Import the meta file
     imports += `import ${varName} from "./tools/${folder}/meta";\n`;
     
-    // Import the Tool.jsx file if it exists, and merge them
     if (fs.existsSync(toolPath)) {
-      imports += `import ${compName} from "./tools/${folder}/Tool";\n`;
+      // Wrap in dynamic import to prevent Vercel SSR window/document errors during build
+      imports += `const ${compName} = dynamic(() => import("./tools/${folder}/Tool"), { ssr: false });\n`;
       exports += `  { ...${varName}, component: ${compName} },\n`;
     } else {
       exports += `  ${varName},\n`;
@@ -38,4 +36,4 @@ toolFolders.forEach(folder => {
 exports += '];\n';
 
 fs.writeFileSync(registryFile, imports + '\n' + exports);
-console.log('✅ Auto-generated registry.js (now with Components!)');
+console.log('✅ Auto-generated registry.js (with strict Client-Only loading!)');
