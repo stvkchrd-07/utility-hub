@@ -1,10 +1,11 @@
 // AUTO-GENERATED FILE. DO NOT EDIT MANUALLY.
+import dynamic from "next/dynamic";
 import bgRemoverMeta from "./tools/bg-remover/meta";
-import bgRemoverComponent from "./tools/bg-remover/Tool";
+const bgRemoverComponent = dynamic(() => import("./tools/bg-remover/Tool"), { ssr: false });
 import imageResizeMeta from "./tools/image-resize/meta";
-import imageResizeComponent from "./tools/image-resize/Tool";
+const imageResizeComponent = dynamic(() => import("./tools/image-resize/Tool"), { ssr: false });
 import qrGeneratorMeta from "./tools/qr-generator/meta";
-import qrGeneratorComponent from "./tools/qr-generator/Tool";
+const qrGeneratorComponent = dynamic(() => import("./tools/qr-generator/Tool"), { ssr: false });
 
 export const tools = [
   { ...bgRemoverMeta, component: bgRemoverComponent },
