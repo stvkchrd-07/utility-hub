@@ -1,3 +1,7 @@
+#!/bin/bash
+echo "Redesigning landing page for mobile optimization and new messaging..."
+
+cat << 'INNER_EOF' > src/app/page.jsx
 import { tools } from "@/registry";
 import ToolCard from "@/components/ToolCard";
 import Navbar from "@/components/Navbar";
@@ -58,3 +62,6 @@ export default function Home() {
     </div>
   );
 }
+INNER_EOF
+
+echo "Done! The landing page is now mobile-friendly and messaging is updated."
